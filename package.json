@@ -1,0 +1,47 @@
+{
+  "name": "tween-list",
+  "version": "0.0.1",
+  "description": "Strategy-driven virtualized list for React with smooth position-based transitions",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "vitest"
+  },
+  "keywords": [
+    "react",
+    "virtual",
+    "list",
+    "scroll",
+    "animation",
+    "tween",
+    "virtualized",
+    "infinite-scroll"
+  ],
+  "author": "Igor <igor.tceglevskii@email.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tseglevskiy/tween-list"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
