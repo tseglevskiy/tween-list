@@ -7,9 +7,9 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "files": [
@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "test": "vitest"
+    "test": "vitest",
+    "demo": "vite serve -c demo/vite.config.ts"
   },
   "keywords": [
     "react",
@@ -39,6 +40,10 @@
     "react": ">=17.0.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^14.3.1",
+    "@types/react": "^18.3.27",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^23.2.0",
     "react": "^18.2.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
