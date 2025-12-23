@@ -21,6 +21,7 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
     onPositionChange,
     signal,
     className,
+    scrollClassName,
     style,
   } = props;
 
@@ -188,6 +189,7 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
       {/* Scroll Container */}
       <div
         ref={containerRef}
+        className={scrollClassName}
         style={{
           height: '100%',
           width: '100%',

@@ -167,6 +167,17 @@ Flattens hierarchical data and provides sticky headers.
 const strategy = new HierarchyStrategy(treeData);
 ```
 
+### `InfiniteHierarchyStrategy`
+
+Combines hierarchical sticky headers with infinite scrolling.
+-   **Infinite Tree**: Loops a flattened tree endlessly.
+-   **Smart Sticky Headers**: Correctly identifies and displays the relevant parent header instance even when wrapped around the loop.
+-   **Stable Identity**: Manages unique IDs for every virtual instance of items and headers.
+
+```typescript
+const strategy = new InfiniteHierarchyStrategy(treeData);
+```
+
 ## Custom Strategies
 
 You can implement your own strategy for advanced use cases:
@@ -205,6 +216,11 @@ We have samples for each strategy in `src/strategies/<StrategyName>/demo/`. You 
 -   **Hierarchy (Tree) Demo**:
     ```bash
     npm run demo:hierarchy
+    ```
+
+-   **Infinite Hierarchy Demo**:
+    ```bash
+    npm run demo:infinite-hierarchy
     ```
 
 This starts a Vite server with an interactive playground demonstrating the capabilities of each strategy.

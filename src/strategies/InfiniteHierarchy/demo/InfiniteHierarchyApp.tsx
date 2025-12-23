@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { TweenList } from '../../../TweenList';
-import { HierarchyStrategy, TreeNode } from '../HierarchyStrategy';
+import { InfiniteHierarchyStrategy, TreeNode } from '../InfiniteHierarchyStrategy';
 
 interface DemoItem extends TreeNode {
   title: string;
@@ -13,11 +13,11 @@ const COLORS = [
   '#FF3385', '#D4FF33', '#FF8C33', '#8C33FF', '#33FF8C'
 ];
 
-function generateTree(depth: number, width: number, prefix = 'Item'): DemoItem[] {
+function generateTree(depth: number, width: number, parentId = 'Item'): DemoItem[] {
   if (depth === 0) return [];
   
   return Array.from({ length: width }, (_, i) => {
-    const id = `${prefix}-${i}`;
+    const id = `${parentId}-${i}`;
     const hasChildren = depth > 1 && Math.random() > 0.3; // 70% chance of children
     const children = hasChildren 
       ? generateTree(depth - 1, width, id) 
@@ -25,7 +25,7 @@ function generateTree(depth: number, width: number, prefix = 'Item'): DemoItem[]
 
     return {
       id,
-      title: `${prefix} ${i + 1}`,
+      title: id,
       color: COLORS[(id.length + i) % COLORS.length],
       type: hasChildren ? 'folder' : 'file',
       children
@@ -33,25 +33,25 @@ function generateTree(depth: number, width: number, prefix = 'Item'): DemoItem[]
   });
 }
 
-export const HierarchyApp: React.FC = () => {
+export const InfiniteHierarchyApp: React.FC = () => {
   const [treeDepth, setTreeDepth] = useState(3);
-  const [treeWidth, setTreeWidth] = useState(5);
+  const [treeWidth, setTreeWidth] = useState(3);
   
   // Create tree structure
   const items = useMemo(() => generateTree(treeDepth, treeWidth, 'Root'), [treeDepth, treeWidth]);
   
   // Create strategy
-  const strategy = useMemo(() => new HierarchyStrategy(items), [items]);
+  const strategy = useMemo(() => new InfiniteHierarchyStrategy(items), [items]);
 
   const slotHeight = 60;
   const containerHeight = 600;
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h1>Tween List Hierarchy Demo</h1>
+      <h1>Infinite Hierarchy Demo</h1>
       <p>
-        Hierarchical list with sticky headers. 
-        As you scroll down, parent folders stick to the top, overlaying content.
+        Infinite scrolling with hierarchical sticky headers.
+        Scroll down to see the list wrap around seamlessly while maintaining correct sticky headers for each section.
       </p>
       
       <div style={{ marginBottom: '20px', display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -87,7 +87,7 @@ export const HierarchyApp: React.FC = () => {
           height={containerHeight}
           slotHeight={slotHeight}
           overscan={5}
-          className="no-scrollbar"
+          scrollClassName="no-scrollbar"
         >
           {(data: any, state) => {
             const depth = data.depth || 0;
@@ -99,10 +99,6 @@ export const HierarchyApp: React.FC = () => {
                 height: '100%',
                 padding: '4px 8px',
                 boxSizing: 'border-box',
-                // Sticky headers are rendered last by the strategy (top of the view)
-                // We can add specific styling for them if we want, but visually 
-                // they just overlay naturally because of the strategy logic.
-                // However, to ensure they cover content, we give them a background.
               }}
             >
               <div
@@ -110,7 +106,7 @@ export const HierarchyApp: React.FC = () => {
                   width: '100%',
                   height: '100%',
                   boxSizing: 'border-box',
-                  backgroundColor: isFolder ? '#fff' : '#fff', // Solid background to cover content
+                  backgroundColor: '#fff',
                   borderLeft: `4px solid ${data.color}`,
                   borderRadius: '4px',
                   display: 'flex',
@@ -122,8 +118,7 @@ export const HierarchyApp: React.FC = () => {
                     : '0 1px 2px rgba(0,0,0,0.05)',
                   opacity: state.opacity,
                   transform: `scale(${0.98 + state.opacity * 0.02})`,
-                  // If it's sticky (offset < expected natural position), maybe highlight?
-                  // But we don't know the natural position here easily.
+                  position: 'relative'
                 }}
               >
                 <div style={{ marginRight: '10px', fontSize: '1.2em' }}>
@@ -134,11 +129,11 @@ export const HierarchyApp: React.FC = () => {
                     {data.title}
                   </div>
                   <div style={{ fontSize: '0.7em', color: '#999' }}>
-                    ID: {data.id} | Depth: {depth}
+                    ID: {data.id} | Depth: {depth} {data.parentId && `| Parent: ${data.parentId}`}
                   </div>
                 </div>
                 <div style={{ fontSize: '0.7em', fontFamily: 'monospace', color: '#ccc' }}>
-                  Off: {state.offset.toFixed(1)}
+                  Idx: {state.index}
                 </div>
               </div>
             </div>

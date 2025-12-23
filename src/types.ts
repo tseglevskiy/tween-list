@@ -84,6 +84,8 @@ export interface TweenListProps<TData = any> {
   signal?: unknown;
   /** Optional CSS class name for the container */
   className?: string;
+  /** Optional CSS class name for the internal scroll container */
+  scrollClassName?: string;
   /** Optional inline styles for the container */
   style?: React.CSSProperties;
 }
