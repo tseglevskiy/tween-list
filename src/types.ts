@@ -58,6 +58,8 @@ export interface ItemRenderState {
   isMoving: boolean;
   /** Item data changed (same id, new version) */
   hasChanged: boolean;
+  /** Item is sticky (constant offset relative to viewport) */
+  isSticky: boolean;
 }
 
 /**
@@ -98,5 +100,6 @@ export interface InterpolatedItem {
   isDisappearing: boolean;
   isMoving: boolean;
   hasChanged: boolean;
+  isSticky: boolean;
   version?: number;
 }

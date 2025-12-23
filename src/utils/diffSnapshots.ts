@@ -64,6 +64,9 @@ export function diffSnapshots(
         ? prevState.version !== inFloor.version
         : false;
 
+      // Check for sticky behavior (constant relative offset)
+      const isSticky = inFloor.offset === inCeil.offset;
+
       result.push({
         id,
         offset,
@@ -73,6 +76,7 @@ export function diffSnapshots(
         isDisappearing,
         isMoving,
         hasChanged,
+        isSticky,
         version: inFloor.version,
       });
     } else if (inFloor && !inCeil) {
@@ -92,6 +96,7 @@ export function diffSnapshots(
         isDisappearing: true,
         isMoving: false,
         hasChanged: false,
+        isSticky: false,
         version: inFloor.version,
       });
     } else if (!inFloor && inCeil) {
@@ -111,6 +116,7 @@ export function diffSnapshots(
         isDisappearing: false,
         isMoving: false,
         hasChanged: false,
+        isSticky: false,
         version: inCeil.version,
       });
     }

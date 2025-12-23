@@ -56,7 +56,10 @@ describe('TweenList', () => {
     expect(containerDiv).toBeTruthy();
     expect(containerDiv.style.height).toBe('300px');
     expect(containerDiv.style.width).toBe('100%');
-    expect(containerDiv.style.overflow).toBe('auto');
+    
+    // Check scroll container (2nd child)
+    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    expect(scrollContainer.style.overflow).toBe('auto');
   });
 
   it('should render with custom width', () => {
@@ -139,7 +142,8 @@ describe('TweenList', () => {
     );
 
     const containerDiv = container.firstChild as HTMLElement;
-    const spacer = containerDiv.children[0] as HTMLElement;
+    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const spacer = scrollContainer.children[0] as HTMLElement;
     expect(spacer).toBeTruthy();
     
     // totalPositions = 1000, slotHeight = 50
@@ -169,7 +173,8 @@ describe('TweenList', () => {
     );
 
     const containerDiv = container.firstChild as HTMLElement;
-    const spacer = containerDiv.children[0] as HTMLElement;
+    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const spacer = scrollContainer.children[0] as HTMLElement;
     // Should be capped at 10_000_000
     const heightStyle = spacer.style.height || spacer.getAttribute('style');
     expect(heightStyle).toContain('10000000px');
@@ -285,7 +290,8 @@ describe('TweenList', () => {
     const containerDiv = container.firstChild as HTMLElement;
     expect(containerDiv).toBeTruthy();
     // With empty strategy, the spacer div should exist but have no item children
-    const spacer = containerDiv.firstChild as HTMLElement;
+    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const spacer = scrollContainer.firstChild as HTMLElement;
     expect(spacer).toBeTruthy();
     expect(spacer.children.length).toBe(0);
   });

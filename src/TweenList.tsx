@@ -88,7 +88,8 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
   // Calculate floor, ceil, and interpolation factor
   const { floor, ceil, t } = useMemo(() => {
     const floor = Math.floor(scrollPosition);
-    const ceil = floor === scrollPosition ? floor : floor + 1;
+    // Always interpolate to next frame to detect sticky items consistently
+    const ceil = floor + 1;
     const t = scrollPosition - floor;
 
     return { floor, ceil, t };
@@ -124,24 +125,35 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
     prevItemsRef.current = newPrevItems;
   });
 
+  // Separate sticky items from scrolling items
+  const stickyItems = interpolatedItems.filter(item => item.isSticky);
+  const scrollItems = interpolatedItems.filter(item => !item.isSticky);
+
   return (
     <div
-      ref={containerRef}
-      className={className}
       style={{
+        position: 'relative',
         height: `${height}px`,
         width,
-        overflow: 'auto',
-        position: 'relative',
         ...style,
       }}
+      className={className}
     >
-      {/* Fix #6: Spacer with items positioned inside it per spec */}
-      <div style={{ height: `${scrollHeight}px`, position: 'relative' }}>
-        {interpolatedItems.map((item) => {
+      {/* Static Overlay Layer for Sticky Items */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+          pointerEvents: 'none', // Allow clicks to pass through to scroll container
+        }}
+      >
+        {stickyItems.map((item) => {
           const data = strategy.getItemData(item.id);
           
-          // Fix #4: Keep interpolated offset in itemState (don't subtract overscan)
           const itemState = {
             id: item.id,
             offset: item.offset,
@@ -151,6 +163,7 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
             isDisappearing: item.isDisappearing,
             isMoving: item.isMoving,
             hasChanged: item.hasChanged,
+            isSticky: true,
           };
 
           return (
@@ -158,18 +171,67 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
               key={item.id}
               style={{
                 position: 'absolute',
-                top: 0,
+                top: `${item.offset * slotHeight}px`, // Fixed position relative to viewport
                 left: 0,
                 right: 0,
                 height: `${slotHeight}px`,
-                transform: `translateY(${(floor + item.offset + t) * slotHeight}px)`,
                 opacity: item.opacity,
+                pointerEvents: 'auto', // Re-enable clicks for the items themselves
               }}
             >
               {children(data, itemState)}
             </div>
           );
         })}
+      </div>
+
+      {/* Scroll Container */}
+      <div
+        ref={containerRef}
+        style={{
+          height: '100%',
+          width: '100%',
+          overflow: 'auto',
+          position: 'relative',
+          zIndex: 0,
+        }}
+      >
+        {/* Fix #6: Spacer with items positioned inside it per spec */}
+        <div style={{ height: `${scrollHeight}px`, position: 'relative' }}>
+          {scrollItems.map((item) => {
+            const data = strategy.getItemData(item.id);
+            
+            // Fix #4: Keep interpolated offset in itemState (don't subtract overscan)
+            const itemState = {
+              id: item.id,
+              offset: item.offset,
+              index: item.index,
+              opacity: item.opacity,
+              isAppearing: item.isAppearing,
+              isDisappearing: item.isDisappearing,
+              isMoving: item.isMoving,
+              hasChanged: item.hasChanged,
+              isSticky: false,
+            };
+
+            return (
+              <div
+                key={item.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: `${slotHeight}px`,
+                  transform: `translateY(${(floor + item.offset + t) * slotHeight}px)`,
+                  opacity: item.opacity,
+                }}
+              >
+                {children(data, itemState)}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
