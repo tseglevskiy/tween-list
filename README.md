@@ -156,6 +156,17 @@ const strategy = new InfiniteLoopStrategy(items, {
 });
 ```
 
+### `HierarchyStrategy`
+
+Flattens hierarchical data and provides sticky headers.
+-   **Tree Flattening**: Converts nested tree data into a flat list.
+-   **Sticky Headers**: Parent nodes stick to the top when their children are visible.
+-   **Depth Awareness**: Provides depth information for indentation.
+
+```typescript
+const strategy = new HierarchyStrategy(treeData);
+```
+
 ## Custom Strategies
 
 You can implement your own strategy for advanced use cases:
@@ -182,10 +193,21 @@ Clone the repository and run:
 
 ```bash
 npm install
-npm run demo
 ```
 
-This starts a Vite server with an interactive playground demonstrating infinite scrolling, dynamic insertions, and debug visualization.
+We have samples for each strategy in `src/strategies/<StrategyName>/demo/`. You can run them using the following commands:
+
+-   **Infinite Loop Demo**:
+    ```bash
+    npm run demo:infinite
+    ```
+
+-   **Hierarchy (Tree) Demo**:
+    ```bash
+    npm run demo:hierarchy
+    ```
+
+This starts a Vite server with an interactive playground demonstrating the capabilities of each strategy.
 
 ## License
 

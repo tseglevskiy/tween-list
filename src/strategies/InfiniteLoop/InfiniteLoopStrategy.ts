@@ -1,4 +1,4 @@
-import { VisibilityStrategy, PositionedItem } from '../types';
+import { VisibilityStrategy, PositionedItem } from '../../types';
 
 /**
  * InfiniteLoopStrategy - Built-in strategy for infinite scrolling lists

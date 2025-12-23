@@ -1,5 +1,6 @@
 export { TweenList } from './TweenList';
-export { InfiniteLoopStrategy } from './strategies/InfiniteLoopStrategy';
+export { InfiniteLoopStrategy } from './strategies/InfiniteLoop/InfiniteLoopStrategy';
+export { HierarchyStrategy } from './strategies/Hierarchy/HierarchyStrategy';
 export type {
   VisibilityStrategy,
   PositionedItem,

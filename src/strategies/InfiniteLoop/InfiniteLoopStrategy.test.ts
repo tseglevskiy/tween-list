@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { InfiniteLoopStrategy } from '../strategies/InfiniteLoopStrategy';
+import { InfiniteLoopStrategy } from './InfiniteLoopStrategy';
 
 interface TestItem {
   id: string;

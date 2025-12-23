@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TweenList } from '../TweenList';
 import { VisibilityStrategy, PositionedItem } from '../types';
-import { InfiniteLoopStrategy } from '../strategies/InfiniteLoopStrategy';
+import { InfiniteLoopStrategy } from '../strategies/InfiniteLoop/InfiniteLoopStrategy';
 
 // Mock strategy for testing
 class MockStrategy implements VisibilityStrategy<string> {

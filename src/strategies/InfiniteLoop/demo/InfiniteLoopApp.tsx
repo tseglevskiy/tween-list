@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { TweenList } from '../src/TweenList';
-import { InfiniteLoopStrategy } from '../src/strategies/InfiniteLoopStrategy';
+import { TweenList } from '../../../TweenList';
+import { InfiniteLoopStrategy } from '../InfiniteLoopStrategy';
 
 interface DemoItem {
   id: string;
@@ -23,7 +23,7 @@ function generateItems(count: number): DemoItem[] {
   }));
 }
 
-const App: React.FC = () => {
+export const InfiniteLoopApp: React.FC = () => {
   const [itemCount, setItemCount] = useState(20);
   const items = useMemo(() => generateItems(itemCount), [itemCount]);
   
@@ -34,8 +34,8 @@ const App: React.FC = () => {
   const containerHeight = 600;
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>Tween List Demo</h1>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h1>Infinite Loop Demo</h1>
       <p>
         Infinite loop scrolling with smooth interpolation and positioning.
         Notice items fading in/out at the edges and maintaining position relative to the document.
@@ -125,5 +125,3 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-export default App;
