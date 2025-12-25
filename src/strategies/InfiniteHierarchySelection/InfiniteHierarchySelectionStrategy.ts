@@ -464,4 +464,53 @@ export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNod
   getInitialPosition(): number {
     return Math.floor(this.totalPositions / 2);
   }
+
+  /**
+   * Iteratively searches for a scroll position where the item becomes naturally visible (not sticky).
+   * Simulates deselection to ensure the item doesn't disappear when stickiness is removed.
+   */
+  findSafeScrollPosition(id: string, currentPosition: number, viewportSlots: number): number {
+    const originalId = this.getOriginalId(id);
+    
+    // Safety check: if item doesn't exist, stay put
+    if (!this.flatItemsById.has(originalId)) {
+      return currentPosition;
+    }
+
+    // Temporarily deselect to check natural visibility
+    const wasSelected = this.selectedIds.has(originalId);
+    if (wasSelected) {
+      this.selectedIds.delete(originalId);
+    }
+
+    // Ensure we start from an integer position, as getItemsAtPosition expects integers
+    let testPos = Math.floor(currentPosition);
+    
+    // Limit iterations to prevent infinite loops (e.g. one full cycle length + buffer)
+    // Or just a reasonable large number since we expect it "above".
+    const limit = this.flatItems.length * 2; 
+    let iterations = 0;
+
+    try {
+      while (iterations < limit) {
+        const items = this.getItemsAtPosition(testPos, viewportSlots);
+        const isVisible = items.some(item => this.getOriginalId(item.id) === originalId);
+        
+        if (isVisible) {
+          return testPos;
+        }
+
+        testPos--; // Scroll up
+        iterations++;
+      }
+    } finally {
+      // Restore selection state
+      if (wasSelected) {
+        this.selectedIds.add(originalId);
+      }
+    }
+
+    // Fallback if not found (should not happen if logic is correct and limits are sufficient)
+    return currentPosition;
+  }
 }

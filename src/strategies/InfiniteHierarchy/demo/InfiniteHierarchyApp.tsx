@@ -84,9 +84,8 @@ export const InfiniteHierarchyApp: React.FC = () => {
       }}>
         <TweenList
           strategy={strategy}
-          height={containerHeight}
+          height={600}
           slotHeight={slotHeight}
-          overscan={5}
           scrollClassName="no-scrollbar"
         >
           {(data: any, state) => {

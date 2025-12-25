@@ -93,9 +93,9 @@ describe('TweenList', () => {
       </TweenList>
     );
 
-    // Should render items based on viewport slots + overscan
+    // Should render items based on viewport slots (overscan removed)
     // viewport slots = ceil(300 / 50) = 6
-    // default overscan = 2, so total slots = 6 + 2*2 = 10
+    // total slots = 6
     // But we only have 3 items that will wrap
     expect(screen.getByTestId('item-item1')).toBeTruthy();
     expect(screen.getByTestId('item-item2')).toBeTruthy();
@@ -188,7 +188,6 @@ describe('TweenList', () => {
         strategy={strategy}
         height={100}
         slotHeight={50}
-        overscan={0}
       >
         {(data) => <div data-testid="item">{data}</div>}
       </TweenList>
@@ -252,26 +251,6 @@ describe('TweenList', () => {
     expect(callCountAfter).toBeGreaterThan(callCountBefore);
   });
 
-  it('should handle custom overscan value', () => {
-    const strategy = new MockStrategy(['item1', 'item2']);
-    const getItemsAtPositionSpy = vi.spyOn(strategy, 'getItemsAtPosition');
-
-    render(
-      <TweenList
-        strategy={strategy}
-        height={100}
-        slotHeight={50}
-        overscan={5}
-      >
-        {(data) => <div>{data}</div>}
-      </TweenList>
-    );
-
-    // viewport slots = ceil(100 / 50) = 2
-    // overscan = 5, total = 2 + 5*2 = 12
-    const firstCall = getItemsAtPositionSpy.mock.calls[0];
-    expect(firstCall[1]).toBe(12); // viewportSlots + overscan * 2
-  });
 
   it('should handle empty strategy', () => {
     const strategy = new MockStrategy([]);
@@ -326,16 +305,14 @@ describe('TweenList', () => {
         strategy={strategy}
         height={275}
         slotHeight={50}
-        overscan={1}
       >
         {(data) => <div>{data}</div>}
       </TweenList>
     );
 
     // viewport slots = ceil(275 / 50) = 6
-    // overscan = 1, total = 6 + 1*2 = 8
     const firstCall = getItemsAtPositionSpy.mock.calls[0];
-    expect(firstCall[1]).toBe(8);
+    expect(firstCall[1]).toBe(6);
   });
 
   it('should use strategy initial position', () => {
@@ -421,10 +398,13 @@ describe('TweenList', () => {
     ];
     const strategy = new InfiniteLoopStrategy(items, { totalPositions: 100 });
     
+    // Need enough height to render multiple loops since overscan is removed
+    // We need to see offset 1 and offset 4. So we need at least 5 slots (0-4).
+    // Height 500 / 100 = 5 slots.
     render(
       <TweenList
         strategy={strategy}
-        height={200}
+        height={500}
         slotHeight={100}
         width={100}
       >

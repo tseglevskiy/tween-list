@@ -74,8 +74,6 @@ export interface TweenListProps<TData = any> {
   slotHeight: number;
   /** Container width (optional, defaults to 100%) */
   width?: number | string;
-  /** Number of extra slots to render above/below viewport */
-  overscan?: number;
   /** Render function for each item */
   children: (data: TData, itemState: ItemRenderState) => React.ReactNode;
   /** Called when scroll position changes */
@@ -88,6 +86,19 @@ export interface TweenListProps<TData = any> {
   scrollClassName?: string;
   /** Optional inline styles for the container */
   style?: React.CSSProperties;
+}
+
+/**
+ * Imperative handle for TweenList component
+ */
+export interface TweenListRef {
+  /** 
+   * Scroll to a specific position (index) 
+   * @param position Target item index
+   * @param behavior Scroll behavior ('auto' for instant, 'smooth' for animated)
+   * @returns Promise that resolves when scroll completes
+   */
+  scrollTo(position: number, behavior?: ScrollBehavior): Promise<void>;
 }
 
 /**

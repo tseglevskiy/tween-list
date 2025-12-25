@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { TweenList } from '../../../TweenList';
+import { TweenListRef, ItemRenderState } from '../../../types';
 import { InfiniteHierarchySelectionStrategy } from '../InfiniteHierarchySelectionStrategy';
 
 // Generate hierarchical data
@@ -22,6 +23,10 @@ const DATA = generateData(20);
 
 export const InfiniteHierarchySelectionApp: React.FC = () => {
   const [signal, setSignal] = useState(0);
+  const listRef = useRef<TweenListRef>(null);
+  // Track current position roughly to feed into strategy
+  // In a real app, this could be state, but ref is better for performance to avoid re-renders
+  const currentPositionRef = useRef(0);
   
   const strategy = useMemo(() => {
     const s = new InfiniteHierarchySelectionStrategy(DATA, { 
@@ -31,11 +36,28 @@ export const InfiniteHierarchySelectionApp: React.FC = () => {
     s.setOnSelectionChange(() => {
       setSignal(prev => prev + 1);
     });
+    
+    // Initial position
+    currentPositionRef.current = s.getInitialPosition();
+
     return s;
   }, []);
 
-  const handleToggle = (id: string) => {
-    strategy.toggleSelection(id);
+  const handleToggle = async (id: string, itemState: ItemRenderState, isSelected: boolean) => {
+    if (itemState.isSticky && isSelected) {
+      // It's a sticky selected item. Scroll to its natural position.
+      // Use iterative safe position finding
+      const viewportSlots = Math.ceil(600 / 40); // height / slotHeight
+      const safePos = strategy.findSafeScrollPosition(id, currentPositionRef.current, viewportSlots);
+      
+      // Scroll to the safe position
+      if (listRef.current) {
+        await listRef.current.scrollTo(safePos, 'smooth');
+        strategy.toggleSelection(id);
+      }
+    } else {
+      strategy.toggleSelection(id);
+    }
   };
 
   return (
@@ -48,15 +70,18 @@ export const InfiniteHierarchySelectionApp: React.FC = () => {
       
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <TweenList
+          ref={listRef}
           strategy={strategy}
           height={600}
           slotHeight={40}
           signal={signal}
-          overscan={0}
+          onPositionChange={(pos) => {
+            currentPositionRef.current = pos;
+          }}
         >
           {(data: any, itemState) => (
             <div
-              onClick={() => handleToggle(data.id)}
+              onClick={() => handleToggle(data.id, itemState, data.isSelected)}
               style={{
                 height: '100%',
                 display: 'flex',

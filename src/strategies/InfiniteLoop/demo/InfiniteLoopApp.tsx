@@ -64,9 +64,8 @@ export const InfiniteLoopApp: React.FC = () => {
       }}>
         <TweenList
           strategy={strategy}
-          height={containerHeight}
+          height={600}
           slotHeight={slotHeight}
-          overscan={2}
           className="no-scrollbar"
         >
           {(data, state) => (

@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { TweenListProps } from './types';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { TweenListProps, TweenListRef } from './types';
 import { diffSnapshots } from './utils/diffSnapshots';
+import { easeInOutCubic } from './utils/easing';
 
 const MAX_SCROLL_HEIGHT = 10_000_000; // Cap scroll height to prevent overflow
 
@@ -10,13 +11,15 @@ const MAX_SCROLL_HEIGHT = 10_000_000; // Cap scroll height to prevent overflow
  * Operates on discrete integer positions rather than pixel offsets, enabling
  * smooth interpolation-based animations and pluggable visibility strategies.
  */
-export function TweenList<TData = any>(props: TweenListProps<TData>) {
+export const TweenList = forwardRef<TweenListRef, TweenListProps<any>>(function TweenList<TData = any>(
+  props: TweenListProps<TData>, 
+  ref: React.Ref<TweenListRef>
+) {
   const {
     strategy,
     height,
     slotHeight,
     width = '100%',
-    overscan = 2,
     children,
     onPositionChange,
     signal,
@@ -30,11 +33,64 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
   );
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+  const animationRafRef = useRef<number | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollTo: (position: number, behavior: ScrollBehavior = 'auto') => {
+      return new Promise<void>((resolve) => {
+        const container = containerRef.current;
+        if (!container) {
+          resolve();
+          return;
+        }
+
+        // Cancel any pending scroll animation
+        if (animationRafRef.current !== null) {
+          cancelAnimationFrame(animationRafRef.current);
+          animationRafRef.current = null;
+        }
+
+        const scrollTop = position * slotHeight;
+        
+        if (behavior === 'smooth') {
+          const startScrollTop = container.scrollTop;
+          const distance = scrollTop - startScrollTop;
+          const startTime = performance.now();
+          const duration = 500; // Fixed duration for consistency
+
+          const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeInOutCubic(progress);
+            
+            const newScrollTop = startScrollTop + (distance * easedProgress);
+            container.scrollTop = newScrollTop;
+            
+            if (progress < 1) {
+              animationRafRef.current = requestAnimationFrame(animate);
+            } else {
+              animationRafRef.current = null;
+              resolve();
+            }
+          };
+          
+          animationRafRef.current = requestAnimationFrame(animate);
+        } else {
+          // Update DOM
+          container.scrollTop = scrollTop;
+          
+          // Update state immediately to reflect change without waiting for scroll event
+          // This is important for "teleporting"
+          setScrollPosition(position);
+          resolve();
+        }
+      });
+    }
+  }));
   const prevItemsRef = useRef<Map<string, { offset: number; index?: number; version?: number }>>(new Map());
 
   // Calculate viewport slots
   const viewportSlots = Math.ceil(height / slotHeight);
-  const totalSlots = viewportSlots + overscan * 2;
 
   // Calculate scroll metrics
   const totalPositions = strategy.getTotalPositions();
@@ -99,12 +155,12 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
   // Query strategy for items at floor and ceil positions
   // Include signal in dependencies to trigger re-read
   const itemsAtFloor = useMemo(() => {
-    return strategy.getItemsAtPosition(floor, totalSlots);
-  }, [strategy, floor, totalSlots, signal]);
+    return strategy.getItemsAtPosition(floor, viewportSlots);
+  }, [strategy, floor, viewportSlots, signal]);
 
   const itemsAtCeil = useMemo(() => {
-    return strategy.getItemsAtPosition(ceil, totalSlots);
-  }, [strategy, ceil, totalSlots, signal]);
+    return strategy.getItemsAtPosition(ceil, viewportSlots);
+  }, [strategy, ceil, viewportSlots, signal]);
 
   // Compute interpolated items using dual-diffing
   const interpolatedItems = useMemo(() => {
@@ -236,4 +292,4 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
       </div>
     </div>
   );
-}
+});

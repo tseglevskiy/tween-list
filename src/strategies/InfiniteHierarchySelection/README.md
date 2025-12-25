@@ -35,6 +35,10 @@ strategy.setOnSelectionChange((selectedIds) => {
 
 // Pass to TweenList
 <TweenList strategy={strategy} ... />
+
+// Safe Scroll Target Detection
+// Use this to determine where to scroll to ensure a selected item remains visible upon deselection
+const safePos = strategy.findSafeScrollPosition('some-id', currentScrollPosition, viewportSlots);
 ```
 
 ## Algorithm Explained
@@ -49,6 +53,11 @@ The strategy modifies the standard sticky header algorithm to prioritize selecte
     *   **Protected Stack**: Unlike the standard strategy, this strategy **never removes** a selected item from the sticky stack to make room for a parent. Instead, the stack grows.
     *   **Covered Item Rescue**: As the sticky stack grows (due to parents or other selected items), it may cover naturally visible items at the top of the list. The algorithm continuously checks if any "covered" item is selected. If so, that item is immediately "rescued" (promoted) to the sticky list to ensure it remains visible.
 5.  **Final Composition**: The result is a list where all selected items (whether local or distant) and all necessary context (parents of visible items) are presented at the top.
+
+### Safe Scroll Position Finding
+The strategy exposes `findSafeScrollPosition(id, currentPosition, viewportSlots)`. This method is crucial for interactions where a sticky selected item is clicked to deselect it. Since the item is sticky only *because* it is selected, deselecting it would normally cause it to disappear (return to its far-away natural position). 
+
+This method iteratively searches for the closest scroll position where the item would be **naturally visible** (i.e., not requiring sticky behavior). This allows the application to smoothly scroll to that position *before* deselecting, ensuring a seamless user experience.
 
 ## Limitations
 
