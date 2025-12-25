@@ -156,17 +156,6 @@ const strategy = new InfiniteLoopStrategy(items, {
 });
 ```
 
-### `HierarchyStrategy`
-
-Flattens hierarchical data and provides sticky headers.
--   **Tree Flattening**: Converts nested tree data into a flat list.
--   **Sticky Headers**: Parent nodes stick to the top when their children are visible.
--   **Depth Awareness**: Provides depth information for indentation.
-
-```typescript
-const strategy = new HierarchyStrategy(treeData);
-```
-
 ### `InfiniteHierarchyStrategy`
 
 Combines hierarchical sticky headers with infinite scrolling.
@@ -176,6 +165,18 @@ Combines hierarchical sticky headers with infinite scrolling.
 
 ```typescript
 const strategy = new InfiniteHierarchyStrategy(treeData);
+```
+
+### `InfiniteHierarchySelectionStrategy`
+
+Extends `InfiniteHierarchyStrategy` with intelligent selection stickiness.
+-   **Selection Stickiness**: Selected items stick to the top if they scroll out of view.
+-   **Context Preservation**: Ensures users never lose track of selected items in a massive list.
+-   **Smart Scroll Recovery**: Provides utilities to smoothly scroll back to a selected item's natural position before deselecting.
+
+```typescript
+const strategy = new InfiniteHierarchySelectionStrategy(treeData);
+strategy.select('item-id');
 ```
 
 ## Custom Strategies
@@ -213,14 +214,14 @@ We have samples for each strategy in `src/strategies/<StrategyName>/demo/`. You 
     npm run demo:infinite
     ```
 
--   **Hierarchy (Tree) Demo**:
-    ```bash
-    npm run demo:hierarchy
-    ```
-
 -   **Infinite Hierarchy Demo**:
     ```bash
     npm run demo:infinite-hierarchy
+    ```
+
+-   **Infinite Hierarchy Selection Demo**:
+    ```bash
+    npm run demo:infinite-hierarchy-selection
     ```
 
 This starts a Vite server with an interactive playground demonstrating the capabilities of each strategy.
