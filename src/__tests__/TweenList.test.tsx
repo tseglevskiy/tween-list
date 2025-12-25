@@ -57,8 +57,8 @@ describe('TweenList', () => {
     expect(containerDiv.style.height).toBe('300px');
     expect(containerDiv.style.width).toBe('100%');
     
-    // Check scroll container (2nd child)
-    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    // Check scroll container (1st child now, as overlay was moved inside)
+    const scrollContainer = containerDiv.children[0] as HTMLElement;
     expect(scrollContainer.style.overflow).toBe('auto');
   });
 
@@ -142,7 +142,7 @@ describe('TweenList', () => {
     );
 
     const containerDiv = container.firstChild as HTMLElement;
-    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const scrollContainer = containerDiv.children[0] as HTMLElement;
     const spacer = scrollContainer.children[0] as HTMLElement;
     expect(spacer).toBeTruthy();
     
@@ -173,7 +173,7 @@ describe('TweenList', () => {
     );
 
     const containerDiv = container.firstChild as HTMLElement;
-    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const scrollContainer = containerDiv.children[0] as HTMLElement;
     const spacer = scrollContainer.children[0] as HTMLElement;
     // Should be capped at 10_000_000
     const heightStyle = spacer.style.height || spacer.getAttribute('style');
@@ -290,10 +290,13 @@ describe('TweenList', () => {
     const containerDiv = container.firstChild as HTMLElement;
     expect(containerDiv).toBeTruthy();
     // With empty strategy, the spacer div should exist but have no item children
-    const scrollContainer = containerDiv.children[1] as HTMLElement;
+    const scrollContainer = containerDiv.children[0] as HTMLElement;
     const spacer = scrollContainer.firstChild as HTMLElement;
     expect(spacer).toBeTruthy();
-    expect(spacer.children.length).toBe(0);
+    // Sticky container is always present, so length is 1
+    expect(spacer.children.length).toBe(1);
+    const stickyContainer = spacer.children[0] as HTMLElement;
+    expect(stickyContainer.children.length).toBe(0);
   });
 
   it('should apply opacity to item wrappers', () => {

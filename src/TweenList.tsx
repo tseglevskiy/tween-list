@@ -140,52 +140,6 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
       }}
       className={className}
     >
-      {/* Static Overlay Layer for Sticky Items */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 10,
-          pointerEvents: 'none', // Allow clicks to pass through to scroll container
-        }}
-      >
-        {stickyItems.map((item) => {
-          const data = strategy.getItemData(item.id);
-          
-          const itemState = {
-            id: item.id,
-            offset: item.offset,
-            index: item.index,
-            opacity: item.opacity,
-            isAppearing: item.isAppearing,
-            isDisappearing: item.isDisappearing,
-            isMoving: item.isMoving,
-            hasChanged: item.hasChanged,
-            isSticky: true,
-          };
-
-          return (
-            <div
-              key={item.id}
-              style={{
-                position: 'absolute',
-                top: `${item.offset * slotHeight}px`, // Fixed position relative to viewport
-                left: 0,
-                right: 0,
-                height: `${slotHeight}px`,
-                opacity: item.opacity,
-                pointerEvents: 'auto', // Re-enable clicks for the items themselves
-              }}
-            >
-              {children(data, itemState)}
-            </div>
-          );
-        })}
-      </div>
-
       {/* Scroll Container */}
       <div
         ref={containerRef}
@@ -200,6 +154,51 @@ export function TweenList<TData = any>(props: TweenListProps<TData>) {
       >
         {/* Fix #6: Spacer with items positioned inside it per spec */}
         <div style={{ height: `${scrollHeight}px`, position: 'relative' }}>
+          {/* Sticky Layer - Now inside scroll container using position: sticky */}
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 0, // Don't displace content
+              zIndex: 10,
+              overflow: 'visible', // Allow items to be seen
+            }}
+          >
+            {stickyItems.map((item) => {
+              const data = strategy.getItemData(item.id);
+              
+              const itemState = {
+                id: item.id,
+                offset: item.offset,
+                index: item.index,
+                opacity: item.opacity,
+                isAppearing: item.isAppearing,
+                isDisappearing: item.isDisappearing,
+                isMoving: item.isMoving,
+                hasChanged: item.hasChanged,
+                isSticky: true,
+              };
+
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    position: 'absolute',
+                    top: `${item.offset * slotHeight}px`, // Position relative to sticky container (viewport top)
+                    left: 0,
+                    right: 0,
+                    height: `${slotHeight}px`,
+                    opacity: item.opacity,
+                  }}
+                >
+                  {children(data, itemState)}
+                </div>
+              );
+            })}
+          </div>
+
           {scrollItems.map((item) => {
             const data = strategy.getItemData(item.id);
             
