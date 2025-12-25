@@ -159,4 +159,90 @@ describe('InfiniteHierarchyStrategy', () => {
     // root__6 visible.
     expect(items[2].id).toBe('child2__10');
   });
+
+  it('maintains consistency across loop iterations', () => {
+    // Generate a longer dataset
+    const generateLongData = (count: number, depth: number = 0, parentId: string = ''): any[] => {
+        if (depth > 2) return [];
+        return Array.from({ length: count }).map((_, i) => {
+            const id = parentId ? `${parentId}-${i}` : `item-${i}`;
+            const hasChildren = i % 2 === 0;
+            return {
+                id,
+                children: hasChildren ? generateLongData(2, depth + 1, id) : []
+            };
+        });
+    };
+    
+    const longData = generateLongData(5); // Decent size
+    const strategy = new InfiniteHierarchyStrategy(longData);
+    
+    // Calculate total flattened length by inspecting internal state or deducing
+    // Strategy doesn't expose flatItems directly publicly, but we can deduce it.
+    // Or we can just trust the pattern.
+    // Let's count items by scanning until we see a repeat of item-0 at expected position
+    // Or better, let's just use the strategy to tell us if we can access internal props, 
+    // or just calculate it manually.
+    
+    // Manual calculation of length:
+    // Root level: 5 items
+    // Even roots (0, 2, 4) have children (2 each) -> 3 * 2 = 6 children
+    // Even children (0-0, 0-2? No, children are 0, 1. Even indices of children)
+    // Children indices: 0, 1. 
+    // 0 is even -> has children (2). 1 is odd -> no children.
+    // So for each of the 3 roots:
+    //   Root item (1)
+    //   Child 0 (1) -> has 2 grandchildren (2). Total 3.
+    //   Child 1 (1) -> no grandchildren. Total 1.
+    //   Total per root with children: 1 + 3 + 1 = 5.
+    // Odd roots (1, 3): 1 item each (no children). -> 2 * 1 = 2.
+    // Total: 3 * 5 + 2 = 17 items?
+    
+    // Let's verify length dynamically.
+    const itemsAt0 = strategy.getItemsAtPosition(0, 1000); 
+    // With large viewport, we get natural items. Find first repeat.
+    const firstId = itemsAt0[0].id.split('__')[0];
+    const length = itemsAt0.findIndex((item, index) => index > 0 && item.id.split('__')[0] === firstId);
+    
+    expect(length).toBeGreaterThan(0);
+    
+    const viewportSlots = 10;
+    
+    // Check consistency for a full loop
+    for (let k = 0; k < length; k++) {
+        const itemsK = strategy.getItemsAtPosition(k, viewportSlots);
+        const itemsKN = strategy.getItemsAtPosition(k + length, viewportSlots);
+        const itemsKminusN = strategy.getItemsAtPosition(k - length, viewportSlots);
+        
+        // Compare k with k+N
+        expect(itemsK.length).toBe(itemsKN.length);
+        expect(itemsK.length).toBe(itemsKminusN.length);
+        
+        for (let i = 0; i < itemsK.length; i++) {
+            const itemK = itemsK[i];
+            const itemKN = itemsKN[i];
+            const itemKminusN = itemsKminusN[i];
+            
+            const originalIdK = itemK.id.split('__')[0];
+            const originalIdKN = itemKN.id.split('__')[0];
+            const originalIdKminusN = itemKminusN.id.split('__')[0];
+            
+            // Check identity
+            expect(originalIdK).toBe(originalIdKN);
+            expect(originalIdK).toBe(originalIdKminusN);
+            
+            // Check offset
+            expect(itemK.offset).toBe(itemKN.offset);
+            expect(itemK.offset).toBe(itemKminusN.offset);
+            
+            // Check absolute index difference
+            if (itemK.index !== undefined && itemKN.index !== undefined) {
+                 expect(itemKN.index - itemK.index).toBe(length);
+            }
+            if (itemK.index !== undefined && itemKminusN.index !== undefined) {
+                 expect(itemK.index - itemKminusN.index).toBe(length);
+            }
+        }
+    }
+  });
 });
