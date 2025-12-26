@@ -211,6 +211,16 @@ interface TreeNode {
     children?: TreeNode[];
     [key: string]: any;
 }
+interface FlatHierarchyItem<TData = any> {
+    /** Unique identifier for the item */
+    id: string;
+    /** The actual data payload to be rendered */
+    data: TData;
+    /** Depth in the hierarchy (0-based) */
+    depth: number;
+    /** IDs of parents from root down to immediate parent */
+    parents: string[];
+}
 /**
  * InfiniteHierarchySelectionStrategy - Combines hierarchical sticky headers with infinite scrolling
  * and selection-based stickiness.
@@ -226,17 +236,25 @@ interface TreeNode {
  * - It doesn't cover the case where hierarchy has not enough place in the window for being displayed for a specific child.
  * - It doesn't support the case where all selected items do not fit into the window.
  */
-declare class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNode> implements VisibilityStrategy<TData> {
+declare class InfiniteHierarchySelectionStrategy<TData = any> implements VisibilityStrategy<TData> {
     private flatItems;
-    private itemsById;
     private flatItemsById;
+    private hasChildrenMap;
     private itemVersions;
     private totalPositions;
     private selectedIds;
     private onSelectionChangeCallback?;
-    constructor(items: TData[], options?: {
+    constructor(items: FlatHierarchyItem<TData>[], options?: {
         totalPositions?: number;
     });
+    /**
+     * Static factory method to create a strategy from a nested Tree structure.
+     * Flattens the tree before initializing the strategy.
+     */
+    static fromTree<T extends TreeNode>(items: T[], options?: {
+        totalPositions?: number;
+    }): InfiniteHierarchySelectionStrategy<T>;
+    private static flattenTree;
     /**
      * Main entry point for calculating visible items.
      * Extends the base algorithm to include selected items as sticky headers.
@@ -264,7 +282,6 @@ declare class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNo
     private calculateParentUniqueId;
     private getAbsoluteIndexFromUniqueId;
     private applyStickyItemsToSlots;
-    private flattenItems;
     private getClosestInstanceAbove;
     private getOriginalId;
     toggleSelection(id: string): void;

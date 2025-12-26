@@ -1,6 +1,6 @@
 {
   "name": "tween-list",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Strategy-driven virtualized list for React with smooth position-based transitions",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

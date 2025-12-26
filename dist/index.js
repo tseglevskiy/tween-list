@@ -675,14 +675,47 @@ var InfiniteHierarchyStrategy = class {
 };
 
 // src/strategies/InfiniteHierarchySelection/InfiniteHierarchySelectionStrategy.ts
-var InfiniteHierarchySelectionStrategy = class {
+var InfiniteHierarchySelectionStrategy = class _InfiniteHierarchySelectionStrategy {
   constructor(items, options) {
-    this.itemsById = /* @__PURE__ */ new Map();
+    this.flatItems = items;
     this.flatItemsById = /* @__PURE__ */ new Map();
     this.itemVersions = /* @__PURE__ */ new Map();
-    this.flatItems = this.flattenItems(items);
+    this.hasChildrenMap = /* @__PURE__ */ new Map();
     this.totalPositions = options?.totalPositions ?? 1e5;
     this.selectedIds = /* @__PURE__ */ new Set();
+    for (const item of this.flatItems) {
+      this.flatItemsById.set(item.id, item);
+      this.itemVersions.set(item.id, 0);
+      for (const parentId of item.parents) {
+        this.hasChildrenMap.set(parentId, true);
+      }
+    }
+  }
+  /**
+   * Static factory method to create a strategy from a nested Tree structure.
+   * Flattens the tree before initializing the strategy.
+   */
+  static fromTree(items, options) {
+    const flatItems = _InfiniteHierarchySelectionStrategy.flattenTree(items);
+    return new _InfiniteHierarchySelectionStrategy(flatItems, options);
+  }
+  static flattenTree(items, depth = 0, parents = []) {
+    let result = [];
+    for (const item of items) {
+      const flatItem = {
+        data: item,
+        id: item.id,
+        depth,
+        parents: [...parents]
+      };
+      result.push(flatItem);
+      if (item.children && item.children.length > 0) {
+        const childParents = [...parents, item.id];
+        const children = _InfiniteHierarchySelectionStrategy.flattenTree(item.children, depth + 1, childParents);
+        result = result.concat(children);
+      }
+    }
+    return result;
   }
   /**
    * Main entry point for calculating visible items.
@@ -900,29 +933,6 @@ var InfiniteHierarchySelectionStrategy = class {
       slots.set(index, stickyItem);
     });
   }
-  flattenItems(items, depth = 0, parents = []) {
-    let result = [];
-    for (const item of items) {
-      const flatItem = {
-        data: item,
-        id: item.id,
-        depth,
-        parents: [...parents]
-      };
-      result.push(flatItem);
-      this.itemsById.set(item.id, item);
-      this.flatItemsById.set(item.id, flatItem);
-      if (!this.itemVersions.has(item.id)) {
-        this.itemVersions.set(item.id, 0);
-      }
-      if (item.children && item.children.length > 0) {
-        const childParents = [...parents, item.id];
-        const children = this.flattenItems(item.children, depth + 1, childParents);
-        result = result.concat(children);
-      }
-    }
-    return result;
-  }
   /* Utility Methods */
   getClosestInstanceAbove(flatItem, position) {
     const totalItems = this.flatItems.length;
@@ -974,9 +984,11 @@ var InfiniteHierarchySelectionStrategy = class {
     }
     const parentId = flatItem.parents.length > 0 ? flatItem.parents[flatItem.parents.length - 1] : void 0;
     return {
-      ...flatItem.data,
+      id: originalId,
+      // Ensure ID is present even if TData doesn't have it
+      ...typeof flatItem.data === "object" ? flatItem.data : {},
       depth: flatItem.depth,
-      hasChildren: flatItem.data.children && flatItem.data.children.length > 0,
+      hasChildren: this.hasChildrenMap.get(originalId) || false,
       parentId,
       isSelected: this.selectedIds.has(originalId)
     };
