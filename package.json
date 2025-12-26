@@ -21,7 +21,8 @@
     "demo": "npm run demo:infinite",
     "demo:infinite": "VITE_APP_MODE=infinite vite serve -c demo/vite.config.ts",
     "demo:infinite-hierarchy": "VITE_APP_MODE=infinite-hierarchy vite serve -c demo/vite.config.ts",
-    "demo:infinite-hierarchy-selection": "VITE_APP_MODE=infinite-hierarchy-selection vite serve -c demo/vite.config.ts"
+    "demo:infinite-hierarchy-selection": "VITE_APP_MODE=infinite-hierarchy-selection vite serve -c demo/vite.config.ts",
+    "demo:infinite-hierarchy-selection-tree": "VITE_APP_MODE=infinite-hierarchy-selection-tree vite serve -c demo/vite.config.ts"
   },
   "keywords": [
     "react",

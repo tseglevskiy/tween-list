@@ -24,7 +24,7 @@ const DATA = generateData(5); // Should create a decent sized tree
 describe('InfiniteHierarchySelectionStrategy', () => {
   it('behaves exactly like InfiniteHierarchyStrategy when no items are selected', () => {
     const strategyOriginal = new InfiniteHierarchyStrategy(DATA, { totalPositions: 1000 });
-    const strategySelection = new InfiniteHierarchySelectionStrategy(DATA, { totalPositions: 1000 });
+    const strategySelection = InfiniteHierarchySelectionStrategy.fromTree(DATA, { totalPositions: 1000 });
     
     const viewportSlots = 10;
     const testRange = 200; // Test enough positions to cover multiple loops and sticky situations
@@ -49,7 +49,7 @@ describe('InfiniteHierarchySelectionStrategy', () => {
 
   it('handles selection stickiness', () => {
       // Basic test to verify selection stickiness works at all
-      const strategy = new InfiniteHierarchySelectionStrategy(DATA, { totalPositions: 1000 });
+      const strategy = InfiniteHierarchySelectionStrategy.fromTree(DATA, { totalPositions: 1000 });
       // Find a deep item
       // item-0 -> item-0-0 -> item-0-0-0
       const deepItemId = 'item-0-0-0';
@@ -99,7 +99,7 @@ describe('InfiniteHierarchySelectionStrategy', () => {
     const testPositions = 100; // Check 100 scroll positions
     
     for (const itemToSelect of allItems) {
-      const strategy = new InfiniteHierarchySelectionStrategy(DATA, { totalPositions: 10000 });
+      const strategy = InfiniteHierarchySelectionStrategy.fromTree(DATA, { totalPositions: 10000 });
       strategy.select(itemToSelect.id);
       
       for (let pos = 0; pos < testPositions; pos += 5) { // Step by 5 to sample
@@ -131,7 +131,7 @@ describe('InfiniteHierarchySelectionStrategy', () => {
     };
     
     const longData = generateLongData(5); 
-    const strategy = new InfiniteHierarchySelectionStrategy(longData);
+    const strategy = InfiniteHierarchySelectionStrategy.fromTree(longData);
     
     // Determine flattened length
     const itemsAt0 = strategy.getItemsAtPosition(0, 1000); 
@@ -200,7 +200,7 @@ describe('InfiniteHierarchySelectionStrategy', () => {
     // Each even root (5 items) has ~2 children. -> 10 children.
     // Depth 2... should sum up.
     const data = generateVariedData(10); 
-    const strategy = new InfiniteHierarchySelectionStrategy(data, { totalPositions: 5000 });
+    const strategy = InfiniteHierarchySelectionStrategy.fromTree(data, { totalPositions: 5000 });
     
     // Find all IDs
     const flattenIds = (nodes: any[]): string[] => {
@@ -235,5 +235,72 @@ describe('InfiniteHierarchySelectionStrategy', () => {
         expect(hasFirst).toBe(true);
         expect(hasSecond).toBe(true);
     }
+  });
+
+  it('supports native flat list initialization', () => {
+      // Manually constructed flat list (equivalent to item-0 -> item-0-0)
+      const flatData = [
+          {
+              id: 'item-0',
+              data: { label: 'Item 0' },
+              depth: 0,
+              parents: []
+          },
+          {
+              id: 'item-0-0',
+              data: { label: 'Item 0-0' },
+              depth: 1,
+              parents: ['item-0']
+          },
+          {
+              id: 'item-1',
+              data: { label: 'Item 1' },
+              depth: 0,
+              parents: []
+          },
+          ...Array.from({ length: 10 }).map((_, i) => ({
+              id: `dummy-${i}`,
+              data: { label: `Dummy ${i}` },
+              depth: 0,
+              parents: []
+          }))
+      ];
+
+      const strategy = new InfiniteHierarchySelectionStrategy(flatData, { totalPositions: 100 });
+      
+      // Check normal rendering
+      let items = strategy.getItemsAtPosition(0, 5);
+      expect(items.length).toBe(5);
+      expect(items[0].id).toContain('item-0');
+      expect(items[1].id).toContain('item-0-0');
+      expect(items[2].id).toContain('item-1');
+      expect(items[3].id).toContain('dummy-0');
+      expect(items[4].id).toContain('dummy-1');
+
+      // Check hasChildren logic (calculated in constructor)
+      // getItemData returns TData mixed with hierarchy props
+      const item0Data = strategy.getItemData('item-0');
+      expect((item0Data as any).hasChildren).toBe(true); // Because item-0-0 lists it as parent
+
+      const item00Data = strategy.getItemData('item-0-0');
+      expect((item00Data as any).hasChildren).toBe(false);
+      // Ensure ID is injected
+      expect((item00Data as any).id).toBe('item-0-0');
+
+      // Check selection stickiness with flat data
+      strategy.select('item-0-0');
+      
+      // Scroll way past it (at index 1)
+      // Data length is 3 + 10 = 13.
+      // At position 6:
+      // Index 6 is dummy-3.
+      // Slots: dummy-3, dummy-4, dummy-5, dummy-6, dummy-7.
+      // item-0-0 is NOT in this range naturally.
+      items = strategy.getItemsAtPosition(6, 5);
+      
+      // item-0-0 should stick
+      const sticky = items.find(i => i.id.startsWith('item-0-0'));
+      expect(sticky).toBeDefined();
+      expect(sticky?.offset).toBe(0);
   });
 });

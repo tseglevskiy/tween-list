@@ -6,11 +6,15 @@ export interface TreeNode {
   [key: string]: any;
 }
 
-interface FlatItem<T> {
-  data: T;
+export interface FlatHierarchyItem<TData = any> {
+  /** Unique identifier for the item */
   id: string;
+  /** The actual data payload to be rendered */
+  data: TData;
+  /** Depth in the hierarchy (0-based) */
   depth: number;
-  parents: string[]; // IDs of parents from root down to immediate parent
+  /** IDs of parents from root down to immediate parent */
+  parents: string[];
 }
 
 interface Section {
@@ -33,10 +37,10 @@ interface Section {
  * - It doesn't cover the case where hierarchy has not enough place in the window for being displayed for a specific child.
  * - It doesn't support the case where all selected items do not fit into the window.
  */
-export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNode> implements VisibilityStrategy<TData> {
-  private flatItems: FlatItem<TData>[];
-  private itemsById: Map<string, TData>;
-  private flatItemsById: Map<string, FlatItem<TData>>;
+export class InfiniteHierarchySelectionStrategy<TData = any> implements VisibilityStrategy<TData> {
+  private flatItems: FlatHierarchyItem<TData>[];
+  private flatItemsById: Map<string, FlatHierarchyItem<TData>>;
+  private hasChildrenMap: Map<string, boolean>;
   private itemVersions: Map<string, number>;
   private totalPositions: number;
   
@@ -44,17 +48,67 @@ export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNod
   private onSelectionChangeCallback?: (selectedIds: Set<string>) => void;
 
   constructor(
-    items: TData[], 
+    items: FlatHierarchyItem<TData>[], 
     options?: {
       totalPositions?: number;
     }
   ) {
-    this.itemsById = new Map();
+    this.flatItems = items;
     this.flatItemsById = new Map();
     this.itemVersions = new Map();
-    this.flatItems = this.flattenItems(items);
+    this.hasChildrenMap = new Map();
     this.totalPositions = options?.totalPositions ?? 100_000;
     this.selectedIds = new Set();
+    
+    // Initialize maps and version tracking
+    for (const item of this.flatItems) {
+        this.flatItemsById.set(item.id, item);
+        this.itemVersions.set(item.id, 0);
+        
+        // Track which items are parents
+        for (const parentId of item.parents) {
+            this.hasChildrenMap.set(parentId, true);
+        }
+    }
+  }
+
+  /**
+   * Static factory method to create a strategy from a nested Tree structure.
+   * Flattens the tree before initializing the strategy.
+   */
+  static fromTree<T extends TreeNode>(
+    items: T[], 
+    options?: { totalPositions?: number }
+  ): InfiniteHierarchySelectionStrategy<T> {
+    const flatItems = InfiniteHierarchySelectionStrategy.flattenTree(items);
+    return new InfiniteHierarchySelectionStrategy(flatItems, options);
+  }
+
+  private static flattenTree<T extends TreeNode>(
+    items: T[], 
+    depth: number = 0, 
+    parents: string[] = []
+  ): FlatHierarchyItem<T>[] {
+    let result: FlatHierarchyItem<T>[] = [];
+    
+    for (const item of items) {
+      const flatItem: FlatHierarchyItem<T> = {
+        data: item,
+        id: item.id,
+        depth,
+        parents: [...parents]
+      };
+      
+      result.push(flatItem);
+      
+      if (item.children && item.children.length > 0) {
+        const childParents = [...parents, item.id];
+        const children = InfiniteHierarchySelectionStrategy.flattenTree(item.children as unknown as T[], depth + 1, childParents);
+        result = result.concat(children);
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -322,7 +376,7 @@ export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNod
       return null;
   }
 
-  private calculateParentUniqueId(childFlatItem: FlatItem<TData>, parentId: string, childAbsoluteIndex?: number): string | null {
+  private calculateParentUniqueId(childFlatItem: FlatHierarchyItem<TData>, parentId: string, childAbsoluteIndex?: number): string | null {
       if (childAbsoluteIndex === undefined) return null;
 
       const parentFlatItem = this.flatItemsById.get(parentId);
@@ -350,43 +404,9 @@ export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNod
       });
   }
 
-  private flattenItems(
-    items: TData[], 
-    depth: number = 0, 
-    parents: string[] = []
-  ): FlatItem<TData>[] {
-    let result: FlatItem<TData>[] = [];
-    
-    for (const item of items) {
-      const flatItem: FlatItem<TData> = {
-        data: item,
-        id: item.id,
-        depth,
-        parents: [...parents]
-      };
-      
-      result.push(flatItem);
-      this.itemsById.set(item.id, item);
-      this.flatItemsById.set(item.id, flatItem);
-      
-      // Initialize version if not present
-      if (!this.itemVersions.has(item.id)) {
-        this.itemVersions.set(item.id, 0);
-      }
-      
-      if (item.children && item.children.length > 0) {
-        const childParents = [...parents, item.id];
-        const children = this.flattenItems(item.children as unknown as TData[], depth + 1, childParents);
-        result = result.concat(children);
-      }
-    }
-    
-    return result;
-  }
-
   /* Utility Methods */
 
-  private getClosestInstanceAbove(flatItem: FlatItem<TData>, position: number): number {
+  private getClosestInstanceAbove(flatItem: FlatHierarchyItem<TData>, position: number): number {
     const totalItems = this.flatItems.length;
     const itemIndex = this.flatItems.indexOf(flatItem);
     
@@ -448,10 +468,17 @@ export class InfiniteHierarchySelectionStrategy<TData extends TreeNode = TreeNod
     }
     
     const parentId = flatItem.parents.length > 0 ? flatItem.parents[flatItem.parents.length - 1] : undefined;
+    
+    // We return TData, but mixed with hierarchy info if TData is an object.
+    // However, TypeScript doesn't know TData structure here.
+    // Consumers expecting the original object structure will receive it because flatItem.data IS that object.
+    // We add synthesized properties for convenience if they are missing.
+    
     return {
-      ...flatItem.data,
+      id: originalId, // Ensure ID is present even if TData doesn't have it
+      ...(typeof flatItem.data === 'object' ? flatItem.data : {}),
       depth: flatItem.depth,
-      hasChildren: flatItem.data.children && flatItem.data.children.length > 0,
+      hasChildren: this.hasChildrenMap.get(originalId) || false,
       parentId,
       isSelected: this.selectedIds.has(originalId)
     } as unknown as TData;

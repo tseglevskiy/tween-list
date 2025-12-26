@@ -175,7 +175,12 @@ Extends `InfiniteHierarchyStrategy` with intelligent selection stickiness.
 -   **Smart Scroll Recovery**: Provides utilities to smoothly scroll back to a selected item's natural position before deselecting.
 
 ```typescript
-const strategy = new InfiniteHierarchySelectionStrategy(treeData);
+// For Flat Data (Recommended)
+const strategy = new InfiniteHierarchySelectionStrategy(flatData);
+
+// For Legacy Tree Data
+const strategy = InfiniteHierarchySelectionStrategy.fromTree(treeData);
+
 strategy.select('item-id');
 ```
 
@@ -219,9 +224,14 @@ We have samples for each strategy in `src/strategies/<StrategyName>/demo/`. You 
     npm run demo:infinite-hierarchy
     ```
 
--   **Infinite Hierarchy Selection Demo**:
+-   **Infinite Hierarchy Selection Demo (Flat)**:
     ```bash
     npm run demo:infinite-hierarchy-selection
+    ```
+
+-   **Infinite Hierarchy Selection Demo (Tree)**:
+    ```bash
+    npm run demo:infinite-hierarchy-selection-tree
     ```
 
 This starts a Vite server with an interactive playground demonstrating the capabilities of each strategy.

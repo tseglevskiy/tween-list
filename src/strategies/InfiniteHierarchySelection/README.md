@@ -14,14 +14,23 @@ InfiniteHierarchySelectionStrategy builds upon the logic of [InfiniteHierarchySt
 ## Usage
 
 ```typescript
-import { InfiniteHierarchySelectionStrategy, TreeNode } from './InfiniteHierarchySelectionStrategy';
+import { InfiniteHierarchySelectionStrategy, TreeNode, FlatHierarchyItem } from './InfiniteHierarchySelectionStrategy';
 
+// Option 1: Initialize from Flat Data (Native - Recommended for performance)
+// Bypasses internal flattening step.
+const flatData: FlatHierarchyItem[] = [
+    { id: '1', data: { title: 'Root' }, depth: 0, parents: [] },
+    { id: '1-1', data: { title: 'Child' }, depth: 1, parents: ['1'] }
+];
+const strategy = new InfiniteHierarchySelectionStrategy(flatData);
+
+// Option 2: Initialize from Tree Data (Legacy)
 const treeData: TreeNode[] = [
   { id: '1', title: 'Root', children: [...] },
   // ...
 ];
+const strategyFromTree = InfiniteHierarchySelectionStrategy.fromTree(treeData);
 
-const strategy = new InfiniteHierarchySelectionStrategy(treeData);
 
 // Selection API
 strategy.select('some-id');

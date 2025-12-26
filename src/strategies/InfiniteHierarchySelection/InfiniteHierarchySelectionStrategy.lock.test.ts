@@ -27,7 +27,7 @@ describe('InfiniteHierarchySelectionStrategy Lock Tests', () => {
     }
   ];
 
-  const strategy = new InfiniteHierarchySelectionStrategy(data);
+  const strategy = InfiniteHierarchySelectionStrategy.fromTree(data);
 
   // Select some items to test sticky selection logic
   strategy.select('child1');

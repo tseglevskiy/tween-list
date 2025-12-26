@@ -29,7 +29,7 @@ export const InfiniteHierarchySelectionApp: React.FC = () => {
   const currentPositionRef = useRef(0);
   
   const strategy = useMemo(() => {
-    const s = new InfiniteHierarchySelectionStrategy(DATA, { 
+    const s = InfiniteHierarchySelectionStrategy.fromTree(DATA, { 
         totalPositions: 50000
     });
     // Connect strategy updates to React state
